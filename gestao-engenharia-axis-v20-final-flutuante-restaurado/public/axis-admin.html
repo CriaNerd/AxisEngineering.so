@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AXIS Admin • Assinantes</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    body{background:#07111f;color:#e5eef9}.admin-wrap{max-width:1180px;margin:0 auto;padding:32px}.admin-hero{display:flex;justify-content:space-between;gap:18px;align-items:center;margin-bottom:22px}.admin-hero h1{font-size:34px;margin:0}.admin-hero p{color:#94a3b8}.admin-card{background:rgba(255,255,255,.96);color:#0f172a;border-radius:22px;padding:22px;box-shadow:0 24px 70px rgba(0,0,0,.26);margin-bottom:18px}.admin-login{max-width:440px;margin:9vh auto}.admin-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:14px}.metric{background:#0f172a;color:#fff;border-radius:16px;padding:18px;border-top:4px solid #c9972e}.metric b{font-size:26px}.metric small{display:block;color:#cbd5e1;margin-top:4px}.admin-table{width:100%;border-collapse:collapse}.admin-table th,.admin-table td{padding:13px;border-bottom:1px solid #e5e7eb;text-align:left;vertical-align:top}.admin-table th{font-size:12px;text-transform:uppercase;color:#64748b;background:#f8fafc}.status{display:inline-flex;padding:6px 10px;border-radius:999px;font-weight:800;font-size:12px}.active{background:#dcfce7;color:#166534}.trial{background:#e0f2fe;color:#075985}.pending_subscription{background:#fef3c7;color:#92400e}.inactive{background:#fee2e2;color:#991b1b}.admin-actions{display:flex;gap:8px;flex-wrap:wrap}.admin-actions button,.admin-btn{border:0;border-radius:10px;padding:10px 14px;font-weight:800;cursor:pointer;background:linear-gradient(135deg,#c9972e,#b91c1c);color:#fff}.admin-btn.dark{background:#0f172a}.admin-input{width:100%;border:1px solid #dbe2ea;border-radius:12px;padding:13px;margin:7px 0 12px}.admin-events{max-height:270px;overflow:auto;font-size:13px}.hidden{display:none}.appearance-grid{display:grid;grid-template-columns:1fr 1fr;gap:22px}.site-logo-preview{width:100%;max-width:320px;display:block;background:#07111f;border-radius:16px;padding:18px;margin:10px 0;border:1px solid #22324a}@media(max-width:900px){.appearance-grid{grid-template-columns:1fr}}@media(max-width:900px){.admin-grid{grid-template-columns:1fr}.admin-hero{display:block}.admin-table{font-size:12px}}
+  </style>
+</head>
+<body>
+  <main class="admin-wrap">
+    <section id="loginBox" class="admin-card admin-login">
+      <h1>Admin Gestão Engenharia AXIS</h1>
+      <p>Painel separado do site principal para visualizar assinantes, status dos planos e editar aparência do site.</p>
+      <label>E-mail administrativo</label>
+      <input id="adminEmail" class="admin-input" type="email" placeholder="admin@axis.com.br" />
+      <label>Senha</label>
+      <input id="adminPassword" class="admin-input" type="password" placeholder="Senha administrativa" />
+      <button class="admin-btn" onclick="loginAdmin()">Entrar no painel</button>
+      <p id="loginMsg"></p>
+    </section>
+
+    <section id="panelBox" class="hidden">
+      <div class="admin-hero">
+        <div>
+          <h1>Painel de Assinantes</h1>
+          <p>Área interna da Axis. Não aparece no site principal de vendas.</p>
+        </div>
+        <div class="admin-actions">
+          <button onclick="loadSubscribers()">Atualizar</button>
+          <button class="admin-btn dark" onclick="logoutAdmin()">Sair</button>
+        </div>
+      </div>
+      <div id="metrics" class="admin-grid"></div>
+      
+      <div class="admin-card">
+        <h2>Aparência do site</h2>
+        <p>Edite nome, logo e cores do site principal sem mexer no código. As alterações ficam salvas no PostgreSQL.</p>
+        <div class="appearance-grid">
+          <div>
+            <label>Nome do sistema</label>
+            <input id="siteProductName" class="admin-input" placeholder="Gestão Engenharia AXIS" />
+            <label>Nome curto</label>
+            <input id="siteShortName" class="admin-input" placeholder="AXIS" />
+            <label>Subtítulo / chamada</label>
+            <input id="siteTagline" class="admin-input" placeholder="Sistema completo para gestão de engenharia" />
+            <label>Rodapé</label>
+            <input id="siteFooterText" class="admin-input" placeholder="Gestão Engenharia AXIS © 2026" />
+          </div>
+          <div>
+            <label>Cor principal</label>
+            <input id="sitePrimaryColor" class="admin-input" type="color" value="#b91c1c" />
+            <label>Cor de destaque</label>
+            <input id="siteAccentColor" class="admin-input" type="color" value="#c9972e" />
+            <label>Cor premium</label>
+            <input id="siteHighlightColor" class="admin-input" type="color" value="#f1c96b" />
+            <label>Trocar logo</label>
+            <input id="siteLogoFile" class="admin-input" type="file" accept="image/*,.svg" />
+            <img id="siteLogoPreview" class="site-logo-preview" src="assets/axis-logo-premium.svg" alt="Logo" />
+            <button class="admin-btn" onclick="saveSiteSettings()">Salvar aparência</button>
+            <p id="siteMsg"></p>
+          </div>
+        </div>
+      </div>
+
+      <div class="admin-card">
+        <h2>Assinantes</h2>
+        <div style="overflow:auto"><table class="admin-table"><thead><tr><th>Empresa</th><th>Admin</th><th>Plano</th><th>Status</th><th>Assinatura MP</th><th>Criado em</th><th>Ações</th></tr></thead><tbody id="subscribersBody"></tbody></table></div>
+      </div>
+      <div class="admin-card">
+        <h2>Últimos eventos</h2>
+        <div id="eventsBox" class="admin-events"></div>
+      </div>
+    </section>
+  </main>
+  <script src="axis-admin.js"></script>
+</body>
+</html>
