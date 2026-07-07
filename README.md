@@ -1,4 +1,4 @@
-# AXIS Engineering OS - Render + Localhost 3000
+# Gestão Engenharia AXIS - Render + Localhost 3000
 
 Versão preparada para rodar localmente em `http://localhost:3000` e fazer deploy no Render como **Web Service**.
 
@@ -102,3 +102,26 @@ subscription_preapproval
 ## Observação
 
 O `package-lock.json` foi removido de propósito para evitar travamento no Windows com registry/cache antigo. O `npm install` vai gerar um lock novo na sua máquina ou no Render.
+
+
+## V17 - Branding e editor visual
+- Nome padrão: Gestão Engenharia AXIS.
+- Logo premium SVG transparente em `public/assets/axis-logo-premium.svg`.
+- Painel Admin > Aparência do site permite editar nome, cores, rodapé e logo.
+- Variáveis Mercado Pago aceitas: `MP_ACCESS_TOKEN` ou `MERCADO_PAGO_ACCESS_TOKEN`.
+
+
+## V18
+- Melhoria de nitidez visual em textos, botões e logo.
+- Mantida a estrutura do sistema e as funcionalidades existentes.
+
+
+## V19
+- Logo AXIS futurista aplicada no sistema em SVG com fundo transparente.
+- Mantidas as funcionalidades de pagamento Mercado Pago, webhook, admin e editor de aparência.
+
+### Webhook Mercado Pago
+Use em produção:
+`https://SEU-DOMINIO.onrender.com/api/mercadopago/webhook`
+
+Eventos recomendados: Order, Pagamentos (legacy), Planos e assinaturas.

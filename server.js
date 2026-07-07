@@ -9,14 +9,14 @@ const nodemailer = require('nodemailer');
 const app = express();
 const PORT = process.env.PORT || 3000;
 const APP_URL = (process.env.APP_URL || `http://localhost:${PORT}`).replace(/\/$/, '');
-const MP_ACCESS_TOKEN = process.env.MP_ACCESS_TOKEN || '';
+const MP_ACCESS_TOKEN = process.env.MP_ACCESS_TOKEN || process.env.MERCADO_PAGO_ACCESS_TOKEN || '';
 const AXIS_WHATSAPP = process.env.AXIS_WHATSAPP || '5521999999999';
 const AXIS_CONTACT_EMAIL = process.env.AXIS_CONTACT_EMAIL || 'contato@axissolutions.com.br';
 const SMTP_HOST = process.env.SMTP_HOST || '';
 const SMTP_PORT = Number(process.env.SMTP_PORT || 587);
 const SMTP_USER = process.env.SMTP_USER || '';
 const SMTP_PASS = process.env.SMTP_PASS || '';
-const SMTP_FROM = process.env.SMTP_FROM || `AXIS Solutions <${AXIS_CONTACT_EMAIL}>`;
+const SMTP_FROM = process.env.SMTP_FROM || `AXIS <${AXIS_CONTACT_EMAIL}>`;
 const DATABASE_URL = process.env.DATABASE_URL || '';
 const AXIS_ADMIN_EMAIL = (process.env.AXIS_ADMIN_EMAIL || 'admin@axis.local').toLowerCase();
 const AXIS_ADMIN_PASSWORD = process.env.AXIS_ADMIN_PASSWORD || 'Axis@123456';
@@ -68,7 +68,19 @@ const PLANS = {
   }
 };
 
+function defaultSiteSettings(){ return {
+  productName: 'Gestão Engenharia AXIS',
+  shortName: 'AXIS',
+  tagline: 'Sistema completo para gestão de engenharia',
+  primaryColor: '#b91c1c',
+  accentColor: '#c9972e',
+  highlightColor: '#f1c96b',
+  logo: '/assets/axis-logo-premium.svg',
+  emblem: '/assets/axis-emblem-premium.svg',
+  footerText: 'Gestão Engenharia AXIS © 2026 • Sistema desenvolvido pela AXIS'
+}; }
 function normalizeDB(db = {}) {
+  db.siteSettings ||= defaultSiteSettings();
   db.companies ||= [];
   db.payments ||= [];
   db.subscriptions ||= [];
@@ -277,7 +289,7 @@ app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.get('/api/health', (req, res) => res.json({ ok: true, product: 'AXIS Engineering OS V15', gateway: 'Mercado Pago', plans: PLANS }));
+app.get('/api/health', (req, res) => res.json({ ok: true, product: 'Gestão Engenharia AXIS', gateway: 'Mercado Pago', plans: PLANS }));
 app.get('/api/plans', (req, res) => res.json({ ok: true, currency: 'BRL', plans: Object.values(PLANS) }));
 
 app.post('/api/register-company', async (req, res) => {
@@ -287,9 +299,9 @@ app.post('/api/register-company', async (req, res) => {
   if (company.email) {
     await sendEmail({
       to: company.email,
-      subject: 'Bem-vindo ao AXIS Engineering OS',
-      text: `Olá ${company.admin}, sua empresa ${company.name} foi criada no AXIS Engineering OS. Acesse ${APP_URL}/pricing.html para escolher seu plano.`,
-      html: `<h2>Bem-vindo ao AXIS Engineering OS</h2><p>Olá ${company.admin}, sua empresa <b>${company.name}</b> foi criada com sucesso.</p><p>Escolha seu plano para ativar o sistema: <a href="${APP_URL}/pricing.html">ver planos</a>.</p>`
+      subject: 'Bem-vindo ao Gestão Engenharia AXIS',
+      text: `Olá ${company.admin}, sua empresa ${company.name} foi criada no Gestão Engenharia AXIS. Acesse ${APP_URL}/pricing.html para escolher seu plano.`,
+      html: `<h2>Bem-vindo ao Gestão Engenharia AXIS</h2><p>Olá ${company.admin}, sua empresa <b>${company.name}</b> foi criada com sucesso.</p><p>Escolha seu plano para ativar o sistema: <a href="${APP_URL}/pricing.html">ver planos</a>.</p>`
     });
   }
   res.json({ ok: true, company });
@@ -318,7 +330,7 @@ app.post('/api/auth/request-password-reset', async (req, res) => {
     const link = `${APP_URL}/reset-password.html?token=${token}`;
     await sendEmail({
       to: email,
-      subject: 'Recuperação de senha AXIS Engineering OS',
+      subject: 'Recuperação de senha Gestão Engenharia AXIS',
       text: `Use este link para redefinir sua senha: ${link}`,
       html: `<h2>Recuperação de senha</h2><p>Clique no link abaixo para redefinir sua senha. Ele expira em 1 hora.</p><p><a href="${link}">Redefinir senha</a></p>`
     });
@@ -349,7 +361,7 @@ app.post('/api/create-subscription-checkout', async (req, res) => {
   try {
     const plan = planFromId(req.body?.plan || 'professional');
     if (plan.id === 'custom') {
-      const text = encodeURIComponent('Olá, quero falar com a AXIS Solutions sobre um sistema sob medida para minha empresa.');
+      const text = encodeURIComponent('Olá, quero falar com a AXIS sobre um sistema sob medida para minha empresa.');
       return res.json({ ok: true, url: `https://wa.me/${AXIS_WHATSAPP}?text=${text}` });
     }
     const db = readDB();
@@ -361,7 +373,7 @@ app.post('/api/create-subscription-checkout', async (req, res) => {
 
     const externalReference = `subscription:${company.id}:${plan.id}`;
     const preapprovalPayload = {
-      reason: `AXIS Engineering OS - Plano ${plan.name}`,
+      reason: `Gestão Engenharia AXIS - Plano ${plan.name}`,
       external_reference: externalReference,
       payer_email: company.email,
       back_url: `${APP_URL}/success.html?type=subscription&plan=${plan.id}`,
@@ -433,7 +445,7 @@ app.post('/api/create-proposal-payment-link', async (req, res) => {
         pending: `${APP_URL}/demo.html?proposal_status=pending`
       },
       auto_return: 'approved',
-      metadata: { product: 'AXIS Engineering OS V15', kind: 'proposal', proposalId: proposal.id, companyName: proposal.companyName, clientName: proposal.clientName },
+      metadata: { product: 'Gestão Engenharia AXIS', kind: 'proposal', proposalId: proposal.id, companyName: proposal.companyName, clientName: proposal.clientName },
       payer: { email: proposal.clientEmail || undefined, name: proposal.clientName || undefined },
       items: [{
         id: proposal.id,
@@ -468,7 +480,7 @@ app.post('/api/axis-ai', (req, res) => {
   if (plan === 'starter') {
     return res.json({ ok: true, locked: true, answer: 'A Axis AI está disponível a partir do plano Professional. Ela ajuda a criar propostas, gerar links de pagamento, organizar contratos, resumir obras e orientar o uso do sistema.' });
   }
-  let answer = 'Posso ajudar você a usar o AXIS Engineering OS. Escolha uma ação: criar proposta, gerar link de pagamento, organizar documentos, revisar fluxo de caixa, acompanhar obras ou preparar relatório.';
+  let answer = 'Posso ajudar você a usar o Gestão Engenharia AXIS. Escolha uma ação: criar proposta, gerar link de pagamento, organizar documentos, revisar fluxo de caixa, acompanhar obras ou preparar relatório.';
   if (message.includes('proposta') || message.includes('contrato')) answer = 'Para fechar contrato, acesse Propostas & Pagamentos, preencha cliente, descrição e valor. O sistema gera a proposta e o link Mercado Pago para enviar por WhatsApp ou e-mail.';
   if (message.includes('pagamento') || message.includes('pix')) answer = 'O pagamento integrado usa Mercado Pago. Com o MP_ACCESS_TOKEN no Render, o sistema cria o checkout automaticamente com PIX, cartão e boleto quando disponíveis na sua conta.';
   if (message.includes('cliente') || message.includes('crm')) answer = 'No CRM, mova o cliente entre Novo Lead, Proposta Enviada, Pagamento Pendente e Fechado. Isso deixa claro quem precisa de follow-up para fechar obra.';
@@ -534,6 +546,38 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
   } catch (e) { res.status(500).json({ ok: false, error: e.message }); }
 });
 
+
+
+app.get('/api/site-settings', (req, res) => {
+  const db = readDB();
+  res.json({ ok: true, settings: { ...defaultSiteSettings(), ...(db.siteSettings || {}) } });
+});
+
+app.get('/api/axis-admin/site-settings', requireAxisAdmin, (req, res) => {
+  const db = readDB();
+  res.json({ ok: true, settings: { ...defaultSiteSettings(), ...(db.siteSettings || {}) } });
+});
+
+app.post('/api/axis-admin/site-settings', requireAxisAdmin, (req, res) => {
+  const db = readDB();
+  const current = { ...defaultSiteSettings(), ...(db.siteSettings || {}) };
+  const next = {
+    ...current,
+    productName: clean(req.body.productName, current.productName),
+    shortName: clean(req.body.shortName, current.shortName),
+    tagline: clean(req.body.tagline, current.tagline),
+    primaryColor: clean(req.body.primaryColor, current.primaryColor),
+    accentColor: clean(req.body.accentColor, current.accentColor),
+    highlightColor: clean(req.body.highlightColor, current.highlightColor),
+    footerText: clean(req.body.footerText, current.footerText)
+  };
+  if (String(req.body.logo || '').startsWith('data:image/') || String(req.body.logo || '').startsWith('/assets/')) next.logo = req.body.logo;
+  if (String(req.body.emblem || '').startsWith('data:image/') || String(req.body.emblem || '').startsWith('/assets/')) next.emblem = req.body.emblem;
+  db.siteSettings = next;
+  db.events.push({ type: 'axis_admin.site_settings_updated', createdAt: new Date().toISOString() });
+  writeDB(db);
+  res.json({ ok: true, settings: next });
+});
 
 app.post('/api/axis-admin/login', (req, res) => {
   const email = clean(req.body.email).toLowerCase();
@@ -606,7 +650,7 @@ app.get('/api/admin-summary', (req, res) => {
 });
 
 initPostgres().then(() => {
-  app.listen(PORT, () => console.log(`AXIS Engineering OS V15 rodando em ${APP_URL}`));
+  app.listen(PORT, () => console.log(`Gestão Engenharia AXIS rodando em ${APP_URL}`));
 }).catch((e) => {
   console.error('Falha ao inicializar PostgreSQL:', e);
   process.exit(1);

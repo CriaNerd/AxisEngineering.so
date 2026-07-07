@@ -1,7 +1,7 @@
 {
-  "name": "axis-engineering-os-v15",
-  "version": "15.0.0",
-  "description": "AXIS Engineering OS V15 - PostgreSQL, assinatura Mercado Pago, área administrativa Axis e painel de assinantes",
+  "name": "gestao-engenharia-axis",
+  "version": "17.0.0",
+  "description": "Gestão Engenharia AXIS - SaaS para engenharia com PostgreSQL, Mercado Pago, admin e editor visual",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
