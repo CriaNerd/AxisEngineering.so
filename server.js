@@ -388,9 +388,11 @@ app.post('/api/create-subscription-checkout', async (req, res) => {
 
     const preapproval = await mercadoPagoPreapproval(preapprovalPayload);
     if (!preapproval) {
-      return res.json({ ok: true, demo: true, url: `/success.html?mode=simulado&type=subscription&plan=${plan.id}`, message: 'Modo simulado: configure MP_ACCESS_TOKEN para criar assinatura real Mercado Pago.' });
-    }
-
+     return res.json({
+  ok: true,
+  demo: true,
+  url: `/success.html?...`
+});
     const db2 = readDB();
     const company2 = db2.companies.find(c => c.id === company.id);
     if (company2) {
