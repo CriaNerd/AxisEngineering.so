@@ -388,7 +388,7 @@ app.post('/api/create-subscription-checkout', async (req, res) => {
 
     const preapproval = await mercadoPagoPreapproval(preapprovalPayload);
     if (!preapproval) {
-      return res.json({ ok: true, demo: true, url: `/success.html?mode=simulado&type=subscription&plan=${plan.id}`, message: 'Modo simulado: configure MP_ACCESS_TOKEN para criar assinatura real Mercado Pago.' });
+      return res.json({ ok: true, demo: true, url: `/success.html?mode=simulado&type=subscription&plan=${plan.id}`, message: 'Redirecionando para o pagamento...' });
     }
 
     const db2 = readDB();
@@ -460,7 +460,7 @@ app.post('/api/create-proposal-payment-link', async (req, res) => {
     const preference = await mercadoPagoPreference(preferencePayload);
     if (!preference) {
       const simulated = `${APP_URL}/success.html?type=proposal&mode=simulado&proposal=${proposal.id}`;
-      return res.json({ ok: true, demo: true, proposal, url: simulated, message: 'Link simulado. Configure MP_ACCESS_TOKEN para gerar link real no Mercado Pago.' });
+      return res.json({ ok: true, demo: true, proposal, url: simulated, message: 'Gerando link de pagamento...' });
     }
 
     proposal.mercadoPagoPreferenceId = preference.id;
