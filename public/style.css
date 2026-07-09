@@ -127,9 +127,6 @@ input::placeholder, textarea::placeholder {
 }
 
 .system-showcase {
-  transform: none !important;
-  animation: none !important;
-  backdrop-filter: none;
   background: rgba(5, 11, 20, .92);
 }
 
@@ -208,3 +205,63 @@ html[data-theme=light] .topbar {
     height: 68px !important;
   }
 }
+
+
+
+
+
+
+
+/* ===== V21: dashboard flutuante real + suporte ===== */
+.system-showcase{
+  animation: axisDemoFloatV21 5.8s ease-in-out infinite !important;
+  transform-style: preserve-3d !important;
+  transform-origin: center center !important;
+  will-change: transform, box-shadow !important;
+}
+
+@keyframes axisDemoFloatV21{
+  0%,100%{
+    transform: perspective(1100px) rotateY(-4deg) rotateX(2deg) translate3d(0,0,0);
+    box-shadow:0 45px 120px rgba(0,40,130,.46), inset 0 1px 0 rgba(255,255,255,.08);
+  }
+  50%{
+    transform: perspective(1100px) rotateY(-2.7deg) rotateX(1deg) translate3d(0,-16px,26px);
+    box-shadow:0 62px 145px rgba(0,40,130,.58), 0 0 36px rgba(201,151,46,.14), inset 0 1px 0 rgba(255,255,255,.1);
+  }
+}
+
+.system-showcase:hover{
+  animation-play-state: running !important;
+}
+
+@media(max-width:1050px){
+  .system-showcase{
+    animation:none !important;
+    transform:none !important;
+  }}
+
+
+/* ===== V22: suporte somente dentro do sistema / assinantes ===== */
+.support-card{
+  border:1px solid var(--line);
+  background:linear-gradient(180deg,var(--panel),rgba(6,12,24,.66));
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  padding:28px;
+}
+.support-card .support-actions{
+  display:flex;
+  flex-wrap:wrap;
+  gap:12px;
+  margin-top:18px;
+}
+.support-card .support-note{
+  border-left:3px solid var(--cyan);
+  padding-left:14px;
+  margin-top:18px;
+  color:var(--muted);
+}
+
+/* V22.1 IA somente para assinantes */
+body> .ai{display:none !important;}

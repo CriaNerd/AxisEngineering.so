@@ -10,7 +10,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const APP_URL = (process.env.APP_URL || `http://localhost:${PORT}`).replace(/\/$/, '');
 const MP_ACCESS_TOKEN = process.env.MP_ACCESS_TOKEN || process.env.MERCADO_PAGO_ACCESS_TOKEN || '';
-const AXIS_WHATSAPP = process.env.AXIS_WHATSAPP || '5521999999999';
+const AXIS_WHATSAPP = process.env.AXIS_WHATSAPP || '5521966390331';
 const AXIS_CONTACT_EMAIL = process.env.AXIS_CONTACT_EMAIL || 'contato@axissolutions.com.br';
 const SMTP_HOST = process.env.SMTP_HOST || '';
 const SMTP_PORT = Number(process.env.SMTP_PORT || 587);
@@ -228,6 +228,19 @@ async function getMercadoPagoPreapproval(id) {
   if (!response.ok) throw new Error(json.message || json.error || 'Erro ao consultar assinatura no Mercado Pago');
   return json;
 }
+
+async function cancelMercadoPagoPreapproval(id) {
+  if (!MP_ACCESS_TOKEN || !id) return { ok: false, skipped: true };
+  const response = await fetch(`https://api.mercadopago.com/preapproval/${id}`, {
+    method: 'PUT',
+    headers: { Authorization: `Bearer ${MP_ACCESS_TOKEN}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ status: 'cancelled' })
+  });
+  const json = await response.json();
+  if (!response.ok) throw new Error(json.message || json.error || 'Erro ao cancelar assinatura no Mercado Pago');
+  return json;
+}
+
 function syncCompanySubscription(db, subscription) {
   const ref = subscription.external_reference || '';
   if (!ref.startsWith('subscription:')) return null;
@@ -388,7 +401,7 @@ app.post('/api/create-subscription-checkout', async (req, res) => {
 
     const preapproval = await mercadoPagoPreapproval(preapprovalPayload);
     if (!preapproval) {
-      return res.json({ ok: true, demo: true, url: `/success.html?mode=simulado&type=subscription&plan=${plan.id}`, message: 'Redirecionando para o pagamento...' });
+      return res.json({ ok: true, demo: true, url: `/success.html?mode=simulado&type=subscription&plan=${plan.id}`, message: 'Redirecionando para o ambiente seguro de pagamento...' });
     }
 
     const db2 = readDB();
@@ -482,7 +495,7 @@ app.post('/api/axis-ai', (req, res) => {
   }
   let answer = 'Posso ajudar você a usar o Gestão Engenharia AXIS. Escolha uma ação: criar proposta, gerar link de pagamento, organizar documentos, revisar fluxo de caixa, acompanhar obras ou preparar relatório.';
   if (message.includes('proposta') || message.includes('contrato')) answer = 'Para fechar contrato, acesse Propostas & Pagamentos, preencha cliente, descrição e valor. O sistema gera a proposta e o link Mercado Pago para enviar por WhatsApp ou e-mail.';
-  if (message.includes('pagamento') || message.includes('pix')) answer = 'O pagamento integrado usa Mercado Pago. Com o MP_ACCESS_TOKEN no Render, o sistema cria o checkout automaticamente com PIX, cartão e boleto quando disponíveis na sua conta.';
+  if (message.includes('pagamento') || message.includes('pix')) answer = 'O pagamento integrado utiliza Mercado Pago e gera automaticamente o checkout com PIX, cartão e boleto quando disponíveis na sua conta.';
   if (message.includes('cliente') || message.includes('crm')) answer = 'No CRM, mova o cliente entre Novo Lead, Proposta Enviada, Pagamento Pendente e Fechado. Isso deixa claro quem precisa de follow-up para fechar obra.';
   if (message.includes('financeiro') || message.includes('caixa')) answer = 'No Financeiro e Fluxo de Caixa, acompanhe valores a receber, despesas, saldo mensal e pagamentos de contratos fechados.';
   if (message.includes('documento')) answer = 'Em Documentos, organize contratos, medições, notas fiscais, imagens da obra e arquivos técnicos por cliente e por obra.';
@@ -546,6 +559,76 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
   } catch (e) { res.status(500).json({ ok: false, error: e.message }); }
 });
 
+
+
+
+app.post('/api/subscriber/cancel-subscription', async (req, res) => {
+  try {
+    const email = clean(req.body.email).toLowerCase();
+    if (!email) return res.status(400).json({ ok: false, error: 'Informe o e-mail da assinatura.' });
+
+    const db = readDB();
+    const company = db.companies.find(c => String(c.email || '').toLowerCase() === email);
+    if (!company) return res.status(404).json({ ok: false, error: 'Assinatura não encontrada para este e-mail.' });
+
+    let mpResult = null;
+    if (company.subscriptionId && MP_ACCESS_TOKEN) {
+      mpResult = await cancelMercadoPagoPreapproval(company.subscriptionId);
+    }
+
+    company.status = 'inactive';
+    company.subscriptionStatus = 'cancelled';
+    company.cancelledAt = new Date().toISOString();
+
+    const sub = db.subscriptions.find(s => s.id === company.subscriptionId || s.companyId === company.id);
+    if (sub) {
+      sub.status = 'cancelled';
+      sub.cancelledAt = company.cancelledAt;
+    }
+
+    db.events.push({ type: 'subscription.cancelled_by_subscriber', companyId: company.id, subscriptionId: company.subscriptionId || '', createdAt: new Date().toISOString() });
+    writeDB(db);
+
+    res.json({ ok: true, message: 'Assinatura cancelada com sucesso.', company: { id: company.id, status: company.status, subscriptionStatus: company.subscriptionStatus }, mercadoPago: mpResult });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+app.post('/api/axis-admin/subscribers/:id/cancel', requireAxisAdmin, async (req, res) => {
+  try {
+    const db = readDB();
+    const company = db.companies.find(c => c.id === req.params.id);
+    if (!company) return res.status(404).json({ ok: false, error: 'Assinante não encontrado.' });
+
+    let mpResult = null;
+    if (company.subscriptionId && MP_ACCESS_TOKEN) {
+      mpResult = await cancelMercadoPagoPreapproval(company.subscriptionId);
+    }
+
+    company.status = 'inactive';
+    company.subscriptionStatus = 'cancelled';
+    company.cancelledAt = new Date().toISOString();
+
+    const sub = db.subscriptions.find(s => s.id === company.subscriptionId || s.companyId === company.id);
+    if (sub) {
+      sub.status = 'cancelled';
+      sub.cancelledAt = company.cancelledAt;
+    }
+
+    db.events.push({ type: 'axis_admin.subscription_cancelled', companyId: company.id, subscriptionId: company.subscriptionId || '', createdAt: new Date().toISOString() });
+    writeDB(db);
+
+    res.json({ ok: true, company, mercadoPago: mpResult });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+app.get('/api/support-url', (req, res) => {
+  const text = encodeURIComponent('Olá, sou assinante/cliente do Gestão Engenharia AXIS e preciso de suporte.');
+  res.json({ ok: true, url: `https://wa.me/${AXIS_WHATSAPP}?text=${text}` });
+});
 
 
 app.get('/api/site-settings', (req, res) => {

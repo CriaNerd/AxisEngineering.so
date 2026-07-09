@@ -125,3 +125,34 @@ Use em produção:
 `https://SEU-DOMINIO.onrender.com/api/mercadopago/webhook`
 
 Eventos recomendados: Order, Pagamentos (legacy), Planos e assinaturas.
+
+
+## V20
+- Dashboard flutuante 3D restaurado via CSS.
+- Nenhuma regra de pagamento, backend ou estrutura foi alterada.
+
+
+## V20 final float restore
+- Removida a regra que desativava `transform` e `animation` da `.system-showcase`.
+- Restaurado o efeito flutuante original do dashboard.
+- Nenhuma funcionalidade de pagamento, backend ou admin foi alterada.
+
+
+## V20.1
+- Corrigida a flutuação automática: agora o dashboard anima sozinho, sem depender do hover.
+
+## V21
+- Cancelamento de assinatura pelo assinante em Demo > Assinatura.
+- Cancelamento de assinatura pelo admin no Painel de Assinantes.
+- Rota de cancelamento tenta cancelar no Mercado Pago quando existe MP_ACCESS_TOKEN e subscriptionId.
+- Botão flutuante de suporte para assinantes.
+- Botão “Sistema Sob Medida” direcionando para WhatsApp 21966390331.
+- Axis AI mantida liberada para Professional e Enterprise.
+- Mensagens públicas removidas para não mencionar MP_ACCESS_TOKEN.
+- Animação flutuante do quadro de demonstração restaurada no CSS.
+
+## V22
+- Removido botão flutuante de suporte do site público de vendas.
+- WhatsApp público mantido apenas no botão “Sistema Sob Medida / Falar com a AXIS”.
+- Suporte por WhatsApp mantido somente dentro do sistema/demo para assinantes.
+- Mantidos cancelamento admin/assinante, Mercado Pago, PostgreSQL, Axis AI Professional/Enterprise e editor admin.

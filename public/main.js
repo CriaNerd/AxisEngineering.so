@@ -24,4 +24,6 @@ document.querySelectorAll('.subscribe').forEach(btn=>btn.addEventListener('click
 if(planForm){planForm.addEventListener('submit',async e=>{e.preventDefault();const data=Object.fromEntries(new FormData(planForm).entries());const r=await fetch('/api/create-subscription-checkout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});const j=await r.json();if(j.url) location.href=j.url; else alert(j.error||'Erro ao criar checkout');});}
 const oldPay=document.getElementById('payForm');
 if(oldPay){oldPay.addEventListener('submit',async e=>{e.preventDefault();const data=Object.fromEntries(new FormData(oldPay).entries());data.plan='professional';const r=await fetch('/api/create-subscription-checkout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});const j=await r.json();if(j.url) location.href=j.url; else alert(j.error||'Erro ao criar checkout');});}
-const ai=document.querySelector('.ai'); const aiOpen=document.getElementById('aiOpen'); if(aiOpen) aiOpen.onclick=()=>ai.classList.toggle('open');
+// IA pública removida. Disponível apenas para assinantes Professional/Enterprise dentro do sistema.
+
+

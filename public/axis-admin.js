@@ -53,7 +53,7 @@ async function loadSubscribers(){
   const j=await r.json(); if(!j.ok)return alert(j.error||'Erro ao carregar');
   const s=j.summary;
   $('metrics').innerHTML=`<div class="metric"><small>Total</small><b>${s.total}</b></div><div class="metric"><small>Ativos</small><b>${s.active}</b></div><div class="metric"><small>Pendentes</small><b>${s.pending}</b></div><div class="metric"><small>Trial</small><b>${s.trial}</b></div><div class="metric"><small>MRR</small><b>${money(s.mrr)}</b></div>`;
-  $('subscribersBody').innerHTML=j.subscribers.map(x=>`<tr><td><b>${x.company||'-'}</b><br><small>${x.email||''}</small></td><td>${x.admin||'-'}</td><td>${x.planName||x.plan||'-'}<br><small>${money(x.monthlyValue)}/mês</small></td><td><span class="status ${x.status}">${x.status||'-'}</span></td><td>${x.subscriptionStatus||'-'}<br><small>${x.subscriptionId||''}</small></td><td>${x.createdAt?new Date(x.createdAt).toLocaleString('pt-BR'):'-'}</td><td><div class="admin-actions"><button onclick="setStatus('${x.id}','active','${x.plan||'professional'}')">Ativar</button><button onclick="setStatus('${x.id}','inactive','${x.plan||'professional'}')">Desativar</button></div></td></tr>`).join('') || '<tr><td colspan="7">Nenhum assinante ainda.</td></tr>';
+  $('subscribersBody').innerHTML=j.subscribers.map(x=>`<tr><td><b>${x.company||'-'}</b><br><small>${x.email||''}</small></td><td>${x.admin||'-'}</td><td>${x.planName||x.plan||'-'}<br><small>${money(x.monthlyValue)}/mês</small></td><td><span class="status ${x.status}">${x.status||'-'}</span></td><td>${x.subscriptionStatus||'-'}<br><small>${x.subscriptionId||''}</small></td><td>${x.createdAt?new Date(x.createdAt).toLocaleString('pt-BR'):'-'}</td><td><div class="admin-actions"><button onclick="setStatus('${x.id}','active','${x.plan||'professional'}')">Ativar</button><button onclick="setStatus('${x.id}','inactive','${x.plan||'professional'}')">Desativar</button><button onclick="cancelSubscription('${x.id}')">Cancelar assinatura</button></div></td></tr>`).join('') || '<tr><td colspan="7">Nenhum assinante ainda.</td></tr>';
   $('eventsBox').innerHTML=(j.events||[]).map(e=>`<div><b>${e.type}</b> • ${e.createdAt?new Date(e.createdAt).toLocaleString('pt-BR'):''}<br><small>${e.companyId||e.proposalId||e.subscriptionId||''}</small></div><hr>`).join('');
 }
 async function setStatus(id,status,plan){
@@ -61,3 +61,13 @@ async function setStatus(id,status,plan){
   const j=await r.json(); if(!j.ok)return alert(j.error||'Erro ao atualizar'); loadSubscribers();
 }
 if(token()){showPanel();loadSubscribers();loadSiteSettings()}
+
+
+async function cancelSubscription(id){
+  if(!confirm('Cancelar a assinatura deste assinante?')) return;
+  const r=await fetch('/api/axis-admin/subscribers/'+id+'/cancel',{method:'POST',headers:{Authorization:'Bearer '+token()}});
+  const j=await r.json();
+  if(!j.ok)return alert(j.error||'Erro ao cancelar assinatura');
+  alert('Assinatura cancelada com sucesso.');
+  loadSubscribers();
+}

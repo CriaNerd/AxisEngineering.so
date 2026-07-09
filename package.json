@@ -1,6 +1,6 @@
 {
-  "name": "gestao-engenharia-axis",
-  "version": "17.0.0",
+  "name": "gestao-engenharia-axis-v22",
+  "version": "22.0.0",
   "description": "Gestão Engenharia AXIS - SaaS para engenharia com PostgreSQL, Mercado Pago, admin e editor visual",
   "main": "server.js",
   "scripts": {
