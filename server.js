@@ -22,7 +22,7 @@ const AXIS_ADMIN_EMAIL = (process.env.AXIS_ADMIN_EMAIL || 'admin@axis.local').to
 const AXIS_ADMIN_PASSWORD = process.env.AXIS_ADMIN_PASSWORD || 'Axis@123456';
 const ADMIN_JWT_SECRET = process.env.ADMIN_JWT_SECRET || crypto.randomBytes(32).toString('hex');
 const pool = DATABASE_URL ? new Pool({ connectionString: DATABASE_URL, ssl: process.env.PGSSL === 'false' ? false : { rejectUnauthorized: false } }) : null;
-let DB_CACHE = { companies: [], payments: [], subscriptions: [], passwordResets: [], proposals: [], contracts: [], events: [] };
+let DB_CACHE = { companies: [], leads: [], payments: [], subscriptions: [], passwordResets: [], proposals: [], contracts: [], events: [] };
 
 
 const PLANS = {
@@ -82,6 +82,7 @@ function defaultSiteSettings(){ return {
 function normalizeDB(db = {}) {
   db.siteSettings ||= defaultSiteSettings();
   db.companies ||= [];
+  db.leads ||= [];
   db.payments ||= [];
   db.subscriptions ||= [];
   db.passwordResets ||= [];
@@ -319,6 +320,70 @@ app.post('/api/register-company', async (req, res) => {
   }
   res.json({ ok: true, company });
 });
+
+
+app.post('/api/trial-lead', (req, res) => {
+  const db = readDB();
+  const name = clean(req.body.name);
+  const companyName = clean(req.body.companyName);
+  const email = clean(req.body.email).toLowerCase();
+  const phone = clean(req.body.phone);
+  const marketingConsent = req.body.marketingConsent === true || req.body.marketingConsent === 'true' || req.body.marketingConsent === 'on';
+
+  if (!name || !companyName || !email || !phone) {
+    return res.status(400).json({ ok: false, error: 'Preencha nome, empresa, e-mail e WhatsApp.' });
+  }
+
+  const existing = db.leads.find(lead => lead.email === email || lead.phone === phone);
+  const now = new Date().toISOString();
+
+  if (existing) {
+    Object.assign(existing, {
+      name,
+      companyName,
+      email,
+      phone,
+      marketingConsent,
+      updatedAt: now,
+      lastSource: 'trial_7_days'
+    });
+  } else {
+    db.leads.push({
+      id: 'lead_' + Date.now(),
+      name,
+      companyName,
+      email,
+      phone,
+      marketingConsent,
+      source: 'trial_7_days',
+      createdAt: now,
+      updatedAt: now
+    });
+  }
+
+  db.events.push({
+    type: 'trial.lead_saved',
+    email,
+    phone,
+    marketingConsent,
+    createdAt: now
+  });
+
+  writeDB(db);
+  res.json({ ok: true, saved: true });
+});
+
+app.get('/api/axis-admin/leads', requireAxisAdmin, (req, res) => {
+  const db = readDB();
+  const leads = [...db.leads].sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
+  res.json({
+    ok: true,
+    total: leads.length,
+    consented: leads.filter(lead => lead.marketingConsent).length,
+    leads
+  });
+});
+
 
 app.post('/api/auth/login', (req, res) => {
   const db = readDB();

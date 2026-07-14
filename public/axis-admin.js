@@ -43,7 +43,7 @@ async function loginAdmin(){
   const r=await fetch('/api/axis-admin/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:$('adminEmail').value,password:$('adminPassword').value})});
   const j=await r.json();
   if(!j.ok){$('loginMsg').textContent=j.error||'Erro no login';return}
-  localStorage.setItem(tokenKey,j.token);showPanel();loadSubscribers();loadSiteSettings();
+  localStorage.setItem(tokenKey,j.token);showPanel();loadSubscribers();loadSiteSettings();loadLeads();
 }
 function logoutAdmin(){localStorage.removeItem(tokenKey);location.reload()}
 function showPanel(){ $('loginBox').classList.add('hidden'); $('panelBox').classList.remove('hidden') }
@@ -60,7 +60,7 @@ async function setStatus(id,status,plan){
   const r=await fetch('/api/axis-admin/subscribers/'+id+'/status',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token()},body:JSON.stringify({status,plan})});
   const j=await r.json(); if(!j.ok)return alert(j.error||'Erro ao atualizar'); loadSubscribers();
 }
-if(token()){showPanel();loadSubscribers();loadSiteSettings()}
+if(token()){showPanel();loadSubscribers();loadSiteSettings();loadLeads()}
 
 
 async function cancelSubscription(id){
@@ -70,4 +70,57 @@ async function cancelSubscription(id){
   if(!j.ok)return alert(j.error||'Erro ao cancelar assinatura');
   alert('Assinatura cancelada com sucesso.');
   loadSubscribers();
+}
+
+
+let axisLeadsCache = [];
+
+async function loadLeads(){
+  const r = await fetch('/api/axis-admin/leads', {
+    headers: { Authorization: 'Bearer ' + token() }
+  });
+  if(r.status === 401){ logoutAdmin(); return; }
+
+  const j = await r.json();
+  if(!j.ok) return alert(j.error || 'Erro ao carregar leads');
+
+  axisLeadsCache = j.leads || [];
+  $('leadsSummary').innerHTML = `<p><b>${j.total}</b> leads cadastrados • <b>${j.consented}</b> autorizaram contato comercial.</p>`;
+
+  $('leadsBody').innerHTML = axisLeadsCache.map(lead => `
+    <tr>
+      <td><b>${lead.name || '-'}</b></td>
+      <td>${lead.companyName || '-'}</td>
+      <td>${lead.email || '-'}</td>
+      <td>${lead.phone || '-'}</td>
+      <td>${lead.marketingConsent ? '<span class="status active">Autorizado</span>' : '<span class="status inactive">Não autorizado</span>'}</td>
+      <td>${lead.createdAt ? new Date(lead.createdAt).toLocaleString('pt-BR') : '-'}</td>
+    </tr>
+  `).join('') || '<tr><td colspan="6">Nenhum lead cadastrado.</td></tr>';
+}
+
+function exportLeadsCsv(){
+  const rows = [
+    ['Responsável','Empresa','E-mail','WhatsApp','Consentimento de marketing','Data de cadastro'],
+    ...axisLeadsCache.map(lead => [
+      lead.name || '',
+      lead.companyName || '',
+      lead.email || '',
+      lead.phone || '',
+      lead.marketingConsent ? 'Sim' : 'Não',
+      lead.createdAt || ''
+    ])
+  ];
+
+  const csv = rows
+    .map(row => row.map(value => `"${String(value).replace(/"/g, '""')}"`).join(';'))
+    .join('\n');
+
+  const blob = new Blob(["\ufeff" + csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'leads-axis.csv';
+  a.click();
+  URL.revokeObjectURL(url);
 }

@@ -156,3 +156,35 @@ Eventos recomendados: Order, Pagamentos (legacy), Planos e assinaturas.
 - WhatsApp público mantido apenas no botão “Sistema Sob Medida / Falar com a AXIS”.
 - Suporte por WhatsApp mantido somente dentro do sistema/demo para assinantes.
 - Mantidos cancelamento admin/assinante, Mercado Pago, PostgreSQL, Axis AI Professional/Enterprise e editor admin.
+
+## V23 — Teste utilizável por 7 dias
+- A demo agora permite cadastrar, editar e excluir clientes, obras, lançamentos financeiros, documentos e equipe.
+- Os dados são salvos automaticamente no `localStorage` do navegador por 7 dias.
+- O contador do período gratuito aparece no topo e na barra lateral.
+- Após 7 dias, os dados permanecem visíveis, mas a edição é bloqueada e o usuário é direcionado aos planos.
+- A IA e o suporte continuam fora do teste gratuito, respeitando a exclusividade dos assinantes.
+- Observação: nesta versão, os dados do teste ficam no navegador utilizado. Não sincronizam entre computadores.
+
+## V23.1 — Dados ocultos após o teste
+- Durante os 7 dias gratuitos, o usuário pode utilizar normalmente e salvar informações.
+- Após o término do período, os dados continuam armazenados no navegador.
+- Os dados deixam de ficar visíveis e o sistema exibe uma tela bloqueada.
+- A tela orienta o usuário a escolher um plano para recuperar o acesso.
+- Nenhum dado é apagado automaticamente.
+
+## V23.2 — Captação de leads do teste
+- Ao iniciar o teste, o visitante informa nome do responsável, empresa, e-mail e WhatsApp.
+- Os dados são salvos no PostgreSQL pelo endpoint `/api/trial-lead`.
+- Incluído campo separado de autorização para contato comercial.
+- O painel administrativo agora exibe os leads e permite exportar CSV.
+- O consentimento é exibido no painel para separar quem autorizou ações de marketing.
+
+## V24 — Gráficos animados na demo
+- Adicionado gráfico animado de receita x despesas.
+- Adicionado gráfico donut com status das obras.
+- Adicionado funil comercial do CRM.
+- Adicionado gráfico de barras de entradas e saídas.
+- Adicionado painel de análise executiva da Axis Intelligence.
+- KPIs agora possuem contadores animados.
+- Os gráficos são feitos em HTML/CSS/SVG puro, sem biblioteca externa.
+- Mantidas as funcionalidades do teste de 7 dias, captação de leads e armazenamento.
