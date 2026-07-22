@@ -18,8 +18,10 @@ const SMTP_USER = process.env.SMTP_USER || '';
 const SMTP_PASS = process.env.SMTP_PASS || '';
 const SMTP_FROM = process.env.SMTP_FROM || `AXIS <${AXIS_CONTACT_EMAIL}>`;
 const DATABASE_URL = process.env.DATABASE_URL || '';
-const AXIS_ADMIN_EMAIL = (process.env.AXIS_ADMIN_EMAIL || 'admin@axis.local').toLowerCase();
-const AXIS_ADMIN_PASSWORD = process.env.AXIS_ADMIN_PASSWORD || 'Axis@123456';
+const IS_PRODUCTION = process.env.NODE_ENV === 'production';
+const AXIS_ADMIN_EMAIL = (process.env.AXIS_ADMIN_EMAIL || (IS_PRODUCTION ? '' : 'admin@axis.local')).toLowerCase();
+const AXIS_ADMIN_PASSWORD = process.env.AXIS_ADMIN_PASSWORD || (IS_PRODUCTION ? '' : 'Axis@123456');
+const AXIS_ADMIN_PASSWORD_HASH = process.env.AXIS_ADMIN_PASSWORD_HASH || '';
 const ADMIN_JWT_SECRET = process.env.ADMIN_JWT_SECRET || crypto.randomBytes(32).toString('hex');
 const pool = DATABASE_URL ? new Pool({ connectionString: DATABASE_URL, ssl: process.env.PGSSL === 'false' ? false : { rejectUnauthorized: false } }) : null;
 let DB_CACHE = { companies: [], leads: [], payments: [], subscriptions: [], passwordResets: [], proposals: [], contracts: [], events: [] };
@@ -180,6 +182,18 @@ function verifyPassword(password, stored = '') {
   if (!salt || !hash) return false;
   const candidate = hashPassword(password, salt).split(':')[1];
   return crypto.timingSafeEqual(Buffer.from(hash), Buffer.from(candidate));
+}
+
+function safeStringEqual(a, b) {
+  const left = Buffer.from(String(a || ''), 'utf8');
+  const right = Buffer.from(String(b || ''), 'utf8');
+  if (left.length !== right.length) return false;
+  return crypto.timingSafeEqual(left, right);
+}
+
+function verifyAxisAdminPassword(password) {
+  if (AXIS_ADMIN_PASSWORD_HASH) return verifyPassword(password, AXIS_ADMIN_PASSWORD_HASH);
+  return safeStringEqual(password, AXIS_ADMIN_PASSWORD);
 }
 async function sendEmail({ to, subject, html, text }) {
   const db = readDB();
@@ -730,7 +744,10 @@ app.post('/api/axis-admin/site-settings', requireAxisAdmin, (req, res) => {
 app.post('/api/axis-admin/login', (req, res) => {
   const email = clean(req.body.email).toLowerCase();
   const password = String(req.body.password || '');
-  if (email !== AXIS_ADMIN_EMAIL || password !== AXIS_ADMIN_PASSWORD) {
+  if (!AXIS_ADMIN_EMAIL || (!AXIS_ADMIN_PASSWORD && !AXIS_ADMIN_PASSWORD_HASH)) {
+    return res.status(503).json({ ok: false, error: 'Login administrativo ainda não foi configurado no servidor.' });
+  }
+  if (!safeStringEqual(email, AXIS_ADMIN_EMAIL) || !verifyAxisAdminPassword(password)) {
     return res.status(401).json({ ok: false, error: 'Login administrativo inválido.' });
   }
   const token = signAdminToken({ email, role: 'axis_admin' });

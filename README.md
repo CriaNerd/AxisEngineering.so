@@ -188,3 +188,22 @@ Eventos recomendados: Order, Pagamentos (legacy), Planos e assinaturas.
 - KPIs agora possuem contadores animados.
 - Os gráficos são feitos em HTML/CSS/SVG puro, sem biblioteca externa.
 - Mantidas as funcionalidades do teste de 7 dias, captação de leads e armazenamento.
+
+## Login administrativo seguro (v24.1)
+
+A página administrativa fica em `/axis-admin.html`.
+
+Em produção, configure no Render as variáveis:
+
+- `AXIS_ADMIN_EMAIL`: e-mail administrativo.
+- `AXIS_ADMIN_PASSWORD_HASH`: hash da senha (recomendado).
+- `ADMIN_JWT_SECRET`: chave aleatória longa, com pelo menos 64 caracteres.
+- Deixe `AXIS_ADMIN_PASSWORD` vazio quando usar o hash.
+
+Para gerar o hash localmente:
+
+```bash
+node scripts/generate-admin-password-hash.js "SuaSenhaForteCom12OuMaisCaracteres"
+```
+
+Copie todo o resultado para `AXIS_ADMIN_PASSWORD_HASH`. Depois salve as variáveis no Render e faça um novo deploy/restart. Alterar a senha significa gerar outro hash e substituir a variável. Nunca coloque a senha real no GitHub, no código ou no arquivo `.env.example`.
